@@ -101,7 +101,7 @@ try:
 
             steps_taken += 1
         prev_diff = diff
-        prev_steps = num_steps
+        prev_steps = num_steps + prev_steps
         time.sleep(1)
 
 except KeyboardInterrupt:
