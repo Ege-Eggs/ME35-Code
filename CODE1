@@ -1,0 +1,108 @@
+import RPi.GPIO as GPIO
+import time
+import math
+GPIO.setmode(GPIO.BOARD)
+
+# Define the GPIO pins for the L298N motor driver
+OUT1 = 12
+OUT2 = 11
+OUT3 = 13
+OUT4 = 15
+
+# Set the GPIO pins as output
+GPIO.setup(OUT1, GPIO.OUT)
+GPIO.setup(OUT2, GPIO.OUT)
+GPIO.setup(OUT3, GPIO.OUT)
+GPIO.setup(OUT4, GPIO.OUT)
+
+GPIO.output(OUT1, GPIO.LOW)
+GPIO.output(OUT2, GPIO.LOW)
+GPIO.output(OUT3, GPIO.LOW)
+GPIO.output(OUT4, GPIO.LOW)
+
+direction = 1  # 1 for clockwise, -1 for counterclockwise
+num_steps = 0
+prev_steps = 0
+prev_diff = 0
+Kp = 0.0004
+Kd = 0
+# Define the step sequences for clockwise and counterclockwise directions
+clockwise_sequence = [(GPIO.HIGH, GPIO.LOW, GPIO.HIGH, GPIO.LOW),
+                       (GPIO.LOW, GPIO.HIGH, GPIO.HIGH, GPIO.LOW),
+                       (GPIO.LOW, GPIO.HIGH, GPIO.LOW, GPIO.HIGH),
+                       (GPIO.HIGH, GPIO.LOW, GPIO.LOW, GPIO.HIGH)]
+
+counterclockwise_sequence = [(GPIO.HIGH, GPIO.LOW, GPIO.LOW, GPIO.HIGH),
+                              (GPIO.LOW, GPIO.HIGH, GPIO.LOW, GPIO.HIGH),
+                              (GPIO.LOW, GPIO.HIGH, GPIO.HIGH, GPIO.LOW),
+                              (GPIO.HIGH, GPIO.LOW, GPIO.HIGH, GPIO.LOW)]
+
+sensors = {
+    "right": {"s2": 16, "s3": 18, "sig": 22},
+    "left": {"s2": 36, "s3": 38, "sig": 40}
+}
+cycles = 10
+step_delay = 0.01
+
+for sensor in sensors.values():
+    GPIO.setup(sensor["s2"], GPIO.OUT)
+    GPIO.setup(sensor["s3"], GPIO.OUT)
+    GPIO.setup(sensor["sig"], GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+
+def DetectColor(sensor):
+    s2, s3, sig = sensor["s2"], sensor["s3"], sensor["sig"]
+    # Detect color values
+    GPIO.output(s2, GPIO.LOW)
+    GPIO.output(s3, GPIO.LOW)
+    time.sleep(0.1)
+    start_time = time.time()
+    for count in range(cycles):
+        GPIO.wait_for_edge(sig, GPIO.FALLING)
+    duration = time.time() - start_time
+    color_value = cycles / duration
+    return color_value
+
+sensor_values = {name: 0 for name in sensors.keys()}
+
+try:
+    while True:
+        current_step = 0
+        for name, sensor in sensors.items():
+            color_value = DetectColor(sensor)
+            sensor_values[name] = color_value
+            print(f"{name.capitalize()} sensor - red value: {color_value}")
+        diff = sensor_values["right"] - sensor_values["left"]
+        num_steps = round(Kp * diff + Kd * (diff - prev_diff)) - prev_steps 
+        print(f"Number of Steps: {num_steps}")
+        if num_steps < 0:
+            direction = -1
+        if num_steps > 0:
+            direction = 1
+        print(direction)
+        if direction == 1:
+            sequence = clockwise_sequence
+        if direction == -1:
+            sequence = counterclockwise_sequence
+        steps_taken = 0
+        num_steps = abs(num_steps)
+        while steps_taken < num_steps:
+            if direction == 1:
+                sequence = clockwise_sequence
+            else:
+                sequence = counterclockwise_sequence
+
+            for step in sequence:
+                GPIO.output(OUT1, step[0])
+                GPIO.output(OUT2, step[1])
+                GPIO.output(OUT3, step[2])
+                GPIO.output(OUT4, step[3])
+                time.sleep(step_delay)
+
+            steps_taken += 1
+        prev_diff = diff
+        prev_steps = num_steps
+        time.sleep(1)
+
+except KeyboardInterrupt:
+    GPIO.cleanup()
