@@ -85,8 +85,8 @@ try:
         if direction == -1:
             sequence = counterclockwise_sequence
         steps_taken = 0
-        num_steps = abs(num_steps)
-        while steps_taken < num_steps:
+        num_steps_abs = abs(num_steps)
+        while steps_taken < num_steps_abs:
             if direction == 1:
                 sequence = clockwise_sequence
             else:
