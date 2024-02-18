@@ -1,4 +1,4 @@
-import RPi.GPIO as GPIO
+_import RPi.GPIO as GPIO
 import time
 import math
 GPIO.setmode(GPIO.BOARD)
@@ -10,7 +10,7 @@ OUT3 = 13
 OUT4 = 15
 
 #DC MOTOR
-#Stepper defines driection and then DC is activated to move for a few seconds in that direction
+#Stepper defines direction and then DC is activated to move for a few seconds in that direction
 IN1 = 37
 IN2 = 35
 GPIO.setup(IN1, GPIO.OUT)
@@ -41,7 +41,7 @@ prev_steps = 0
 prev_diff = 0
 Kp = 0.0002
 Kd = 0.00002
-Ki = 0.5
+Ki = 1
 # Define the step sequences for clockwise and counterclockwise directions
 clockwise_sequence = [(GPIO.HIGH, GPIO.LOW, GPIO.HIGH, GPIO.LOW),
                        (GPIO.LOW, GPIO.HIGH, GPIO.HIGH, GPIO.LOW),
@@ -123,7 +123,7 @@ try:
 
             steps_taken += 1
         prev_diff = diff
-        prev_steps = num_steps
+        prev_steps = prev_steps + num_steps
         move_forward()
         time.sleep(0.1)
         stop_motor()
