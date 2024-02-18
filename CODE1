@@ -13,6 +13,8 @@ OUT4 = 15
 #Stepper defines driection and then DC is activated to move for a few seconds in that direction
 IN1 = 37
 IN2 = 35
+GPIO.setup(IN1, GPIO.OUT)
+GPIO.setup(IN2, GPIO.OUT)
 def move_forward():
     GPIO.output(IN1, GPIO.HIGH)
     GPIO.output(IN2, GPIO.LOW)
