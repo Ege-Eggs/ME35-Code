@@ -41,6 +41,7 @@ prev_steps = 0
 prev_diff = 0
 Kp = 0.0002
 Kd = 0.00002
+Ki = 0.5
 # Define the step sequences for clockwise and counterclockwise directions
 clockwise_sequence = [(GPIO.HIGH, GPIO.LOW, GPIO.HIGH, GPIO.LOW),
                        (GPIO.LOW, GPIO.HIGH, GPIO.HIGH, GPIO.LOW),
@@ -94,7 +95,7 @@ try:
             color_value = DetectColor(sensor)
             sensor_values[name] = color_value
         diff = (sensor_values["right"] - sensor_values["left"]) - calib
-        num_steps = round(Kp * diff + Kd * (diff - prev_diff)) - prev_steps 
+        num_steps = round(Kp * diff + Kd * (diff - prev_diff)) - Ki * prev_steps 
         print(f"Number of Steps: {num_steps}")
         if num_steps < 0:
             direction = -1
