@@ -9,6 +9,19 @@ OUT2 = 11
 OUT3 = 13
 OUT4 = 15
 
+#DC MOTOR
+#Stepper defines driection and then DC is activated to move for a few seconds in that direction
+IN1 = 37
+IN2 = 35
+def move_forward():
+    GPIO.output(IN1, GPIO.HIGH)
+    GPIO.output(IN2, GPIO.LOW)
+
+# Function to stop the motor
+def stop_motor():
+    GPIO.output(IN1, GPIO.LOW)
+    GPIO.output(IN2, GPIO.LOW)
+
 # Set the GPIO pins as output
 GPIO.setup(OUT1, GPIO.OUT)
 GPIO.setup(OUT2, GPIO.OUT)
@@ -24,8 +37,8 @@ direction = 1  # 1 for clockwise, -1 for counterclockwise
 num_steps = 0
 prev_steps = 0
 prev_diff = 0
-Kp = 0.0004
-Kd = 0
+Kp = 0.0002
+Kd = 0.00002
 # Define the step sequences for clockwise and counterclockwise directions
 clockwise_sequence = [(GPIO.HIGH, GPIO.LOW, GPIO.HIGH, GPIO.LOW),
                        (GPIO.LOW, GPIO.HIGH, GPIO.HIGH, GPIO.LOW),
@@ -41,7 +54,6 @@ sensors = {
     "right": {"s2": 16, "s3": 18, "sig": 22},
     "left": {"s2": 36, "s3": 38, "sig": 40}
 }
-cycles = 1000
 step_delay = 0.05
 
 for sensor in sensors.values():
@@ -65,14 +77,21 @@ def DetectColor(sensor):
 
 sensor_values = {name: 0 for name in sensors.keys()}
 
+cycles = 100000
+for name, sensor in sensors.items():
+     color_value = DetectColor(sensor)
+     sensor_values[name] = color_value
+calib = sensor_values["right"] - sensor_values["left"]   
+print(calib)  
+cycles = 1000
+time.sleep(2)
 try:
     while True:
         current_step = 0
         for name, sensor in sensors.items():
             color_value = DetectColor(sensor)
             sensor_values[name] = color_value
-            print(f"{name.capitalize()} sensor - red value: {color_value}")
-        diff = sensor_values["right"] - sensor_values["left"]
+        diff = (sensor_values["right"] - sensor_values["left"]) - calib
         num_steps = round(Kp * diff + Kd * (diff - prev_diff)) - prev_steps 
         print(f"Number of Steps: {num_steps}")
         if num_steps < 0:
@@ -102,6 +121,9 @@ try:
             steps_taken += 1
         prev_diff = diff
         prev_steps = num_steps
+        move_forward()
+        time.sleep(0.1)
+        stop_motor()
         time.sleep(0.7)
 
 except KeyboardInterrupt:
