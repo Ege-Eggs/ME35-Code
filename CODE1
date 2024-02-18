@@ -41,8 +41,8 @@ sensors = {
     "right": {"s2": 16, "s3": 18, "sig": 22},
     "left": {"s2": 36, "s3": 38, "sig": 40}
 }
-cycles = 10
-step_delay = 0.01
+cycles = 1000
+step_delay = 0.05
 
 for sensor in sensors.values():
     GPIO.setup(sensor["s2"], GPIO.OUT)
@@ -102,7 +102,7 @@ try:
             steps_taken += 1
         prev_diff = diff
         prev_steps = num_steps
-        time.sleep(1)
+        time.sleep(0.7)
 
 except KeyboardInterrupt:
     GPIO.cleanup()
